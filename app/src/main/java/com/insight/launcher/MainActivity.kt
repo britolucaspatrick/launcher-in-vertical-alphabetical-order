@@ -3,7 +3,6 @@ package com.insight.launcher
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
@@ -11,21 +10,25 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
-import android.util.TypedValue
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.insight.launcher.data.repository.AppRepositoryImpl
+import com.insight.launcher.domain.usecase.GetInstalledAppsUseCase
+import com.insight.launcher.presentation.MainViewModel
+import com.insight.launcher.presentation.MainViewModelFactory
+import com.insight.launcher.presentation.model.AppUiModel
 import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
@@ -33,6 +36,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var currentRecyclerAdapter: AppAdapter
     private var lastUninstalledPackage: String? = null
     private lateinit var sharedPreferences: SharedPreferences
+    
+    private val repository by lazy { AppRepositoryImpl(this) }
+    private val getInstalledAppsUseCase by lazy { GetInstalledAppsUseCase(repository) }
+    private val viewModel: MainViewModel by viewModels {
+        MainViewModelFactory(application, getInstalledAppsUseCase)
+    }
 
     companion object {
         private const val TAG = "LauncherDebug"
@@ -45,11 +54,11 @@ class MainActivity : AppCompatActivity() {
 
     private val uninstallResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    ) { _ ->
         Handler(Looper.getMainLooper()).postDelayed({
             lastUninstalledPackage?.let { packageName ->
-                if (!isAppInstalled(packageName)) {
-                    refreshAppsList()
+                if (!repository.isAppInstalled(packageName)) {
+                    viewModel.fetchApps()
                 }
             }
             lastUninstalledPackage = null
@@ -75,16 +84,18 @@ class MainActivity : AppCompatActivity() {
                 insets
             }
 
-            setupAppsList()
+            setupRecyclerView()
+            observeViewModel()
+            
+            viewModel.fetchApps()
         } catch (e: Exception) {
             Log.e(TAG, "Error: ${e.message}", e)
         }
     }
 
-    private fun setupAppsList() {
-        val apps = getInstalledApps()
+    private fun setupRecyclerView() {
         currentRecyclerAdapter = AppAdapter(
-            apps,
+            emptyList(),
             onAppClick = { app -> launchApp(app.packageName) },
             onAppLongClick = { app -> showAppOptionsDialog(app) },
             fontSize = getSavedFontSize(),
@@ -93,8 +104,10 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = currentRecyclerAdapter
     }
 
-    private fun refreshAppsList() {
-        setupAppsList()
+    private fun observeViewModel() {
+        viewModel.apps.observe(this) { apps ->
+            currentRecyclerAdapter.updateApps(apps)
+        }
     }
 
     private fun loadBackgroundImage(recyclerView: RecyclerView) {
@@ -110,8 +123,8 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun showAppOptionsDialog(app: AppItem) {
-        val canUninstall = canUninstallApp(app.packageName)
+    private fun showAppOptionsDialog(app: AppUiModel) {
+        val canUninstall = repository.canUninstallApp(app.packageName)
         val optionsList = mutableListOf("Informações do app", "Configurações do Launcher")
         if (canUninstall) optionsList.add("Desinstalar")
 
@@ -142,7 +155,6 @@ class MainActivity : AppCompatActivity() {
         spinnerSize.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sizes)
         spinnerStyle.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, styles)
 
-        // Set current values
         val currentSize = getSavedFontSize().toInt().toString()
         spinnerSize.setSelection(sizes.indexOf(currentSize).coerceAtLeast(0))
         val currentStyle = getSavedFontStyle()
@@ -154,7 +166,7 @@ class MainActivity : AppCompatActivity() {
             val newStyle = styleValues[spinnerStyle.selectedItemPosition]
             saveFontSize(newSize)
             saveFontStyle(newStyle)
-            refreshAppsList()
+            currentRecyclerAdapter.updateStyles(newSize, newStyle)
             Toast.makeText(this, "Configurações aplicadas", Toast.LENGTH_SHORT).show()
         }
         builder.setNegativeButton("Cancelar", null)
@@ -174,30 +186,8 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun getInstalledApps(): List<AppItem> {
-        val pm = packageManager
-        val apps = mutableListOf<AppItem>()
-        val intent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
-        val resolveInfos = pm.queryIntentActivities(intent, PackageManager.MATCH_ALL)
-        
-        for (resolveInfo in resolveInfos) {
-            val appInfo = resolveInfo.activityInfo.applicationInfo
-            if (appInfo.packageName == packageName) continue
-            apps.add(AppItem(pm.getApplicationLabel(appInfo).toString(), pm.getApplicationIcon(appInfo), appInfo.packageName))
-        }
-        return apps.sortedBy { it.label }
-    }
-
     private fun launchApp(packageName: String) {
         packageManager.getLaunchIntentForPackage(packageName)?.let { startActivity(it) }
-    }
-
-    private fun isAppInstalled(packageName: String): Boolean {
-        return try { packageManager.getApplicationInfo(packageName, 0); true } catch (e: Exception) { false }
-    }
-
-    private fun canUninstallApp(packageName: String): Boolean {
-        return try { (packageManager.getApplicationInfo(packageName, 0).flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0 } catch (e: Exception) { false }
     }
 
     fun saveFontSize(size: Float) = sharedPreferences.edit().putFloat(KEY_FONT_SIZE, size).apply()

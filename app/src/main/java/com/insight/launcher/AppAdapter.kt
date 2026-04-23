@@ -1,22 +1,20 @@
 package com.insight.launcher
 
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
+import com.insight.launcher.presentation.model.AppUiModel
 
 class AppAdapter(
-    private val apps: List<AppItem>,
-    private val onAppClick: (AppItem) -> Unit,
-    private val onAppLongClick: (AppItem) -> Unit,
-    private val fontSize: Float,
-    private val fontStyle: Int
-) :
-    RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
+    private var apps: List<AppUiModel>,
+    private val onAppClick: (AppUiModel) -> Unit,
+    private val onAppLongClick: (AppUiModel) -> Unit,
+    private var fontSize: Float,
+    private var fontStyle: Int
+) : RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
 
     class AppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val icon: ImageView = view.findViewById(R.id.appIcon)
@@ -34,7 +32,6 @@ class AppAdapter(
         holder.label.text = app.label
         holder.icon.setImageDrawable(app.icon)
 
-        // Apply font settings from MainActivity
         holder.label.textSize = fontSize
         holder.label.setTypeface(null, fontStyle)
 
@@ -46,4 +43,15 @@ class AppAdapter(
     }
 
     override fun getItemCount() = apps.size
+
+    fun updateApps(newApps: List<AppUiModel>) {
+        this.apps = newApps
+        notifyDataSetChanged()
+    }
+
+    fun updateStyles(size: Float, style: Int) {
+        this.fontSize = size
+        this.fontStyle = style
+        notifyDataSetChanged()
+    }
 }
