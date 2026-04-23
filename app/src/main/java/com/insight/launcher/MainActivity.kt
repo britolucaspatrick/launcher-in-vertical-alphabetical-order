@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -104,13 +105,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showUninstalledPopup() {
-        AlertDialog.Builder(this)
-            .setTitle("App desinstalado")
-            .setMessage("O app foi removido com sucesso.")
-            .setPositiveButton("OK") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+        Toast.makeText(this, "App desinstalado", Toast.LENGTH_SHORT).show()
     }
 
     private fun loadBackgroundImage(recyclerView: RecyclerView) {
