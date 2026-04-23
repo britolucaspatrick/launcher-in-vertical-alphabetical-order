@@ -1,9 +1,13 @@
 package com.insight.launcher
 
 import android.app.Dialog
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -14,6 +18,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,15 +29,21 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.insight.launcher.data.repository.AppRepositoryImpl
 import com.insight.launcher.domain.usecase.GetInstalledAppsUseCase
 import com.insight.launcher.presentation.MainViewModel
 import com.insight.launcher.presentation.MainViewModelFactory
 import com.insight.launcher.presentation.model.AppUiModel
-import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
+    private lateinit var backgroundImageView: ImageView
+    private lateinit var shimmerContainer: ShimmerFrameLayout
     private lateinit var currentRecyclerAdapter: AppAdapter
     private var lastUninstalledPackage: String? = null
     
@@ -40,6 +51,14 @@ class MainActivity : AppCompatActivity() {
     private val getInstalledAppsUseCase by lazy { GetInstalledAppsUseCase(repository) }
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(application, getInstalledAppsUseCase)
+    }
+
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Intent.ACTION_SCREEN_OFF) {
+                loadBackgroundImage()
+            }
+        }
     }
 
     companion object {
@@ -67,9 +86,15 @@ class MainActivity : AppCompatActivity() {
             setContentView(R.layout.activity_main)
 
             recyclerView = findViewById(R.id.recyclerView)
+            backgroundImageView = findViewById(R.id.backgroundImageView)
+            shimmerContainer = findViewById(R.id.shimmer_view_container)
+            
             recyclerView.layoutManager = GridLayoutManager(this, 5)
 
-            loadBackgroundImage(recyclerView)
+            loadBackgroundImage()
+
+            val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
+            registerReceiver(screenOffReceiver, filter)
 
             ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -84,6 +109,11 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error: ${e.message}", e)
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(screenOffReceiver)
     }
 
     private fun setupRecyclerView() {
@@ -101,17 +131,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadBackgroundImage(recyclerView: RecyclerView) {
-        val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
-        val imageUrl = "https://picsum.photos/1080/2160?random=$dayOfYear&nature"
-        Glide.with(this).load(imageUrl).centerCrop().into(object : com.bumptech.glide.request.target.CustomTarget<android.graphics.drawable.Drawable>() {
-            override fun onResourceReady(resource: android.graphics.drawable.Drawable, transition: com.bumptech.glide.request.transition.Transition<in android.graphics.drawable.Drawable>?) {
-                recyclerView.background = resource
-            }
-            override fun onLoadCleared(placeholder: android.graphics.drawable.Drawable?) {
-                recyclerView.background = placeholder
-            }
-        })
+    private fun loadBackgroundImage() {
+        backgroundImageView.setImageDrawable(null)
+        shimmerContainer.startShimmer()
+        shimmerContainer.visibility = View.VISIBLE
+        
+        val randomSeed = System.currentTimeMillis()
+        val imageUrl = "https://picsum.photos/1080/2160?random=$randomSeed&nature"
+        
+        Glide.with(this)
+            .load(imageUrl)
+            .centerCrop()
+            .listener(object : RequestListener<Drawable> {
+                override fun onLoadFailed(
+                    e: GlideException?,
+                    model: Any?,
+                    target: Target<Drawable>,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    shimmerContainer.stopShimmer()
+                    shimmerContainer.visibility = View.GONE
+                    return false
+                }
+
+                override fun onResourceReady(
+                    resource: Drawable,
+                    model: Any,
+                    target: Target<Drawable>?,
+                    dataSource: DataSource,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    shimmerContainer.stopShimmer()
+                    shimmerContainer.visibility = View.GONE
+                    return false
+                }
+            })
+            .into(backgroundImageView)
     }
 
     private fun showAppOptionsDialog(app: AppUiModel) {
