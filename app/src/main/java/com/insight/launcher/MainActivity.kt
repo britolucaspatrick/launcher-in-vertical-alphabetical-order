@@ -19,6 +19,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.GridLayoutManager
@@ -30,6 +32,7 @@ import com.insight.launcher.presentation.MainViewModel
 import com.insight.launcher.presentation.MainViewModelFactory
 import com.insight.launcher.presentation.model.AppUiModel
 import java.util.Calendar
+import java.util.concurrent.Executor
 
 class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
@@ -50,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         const val KEY_FONT_STYLE = "fontStyle"
         const val DEFAULT_FONT_SIZE = 14f 
         const val DEFAULT_FONT_STYLE = Typeface.BOLD
+        const val SETTINGS_PACKAGE = "com.android.settings"
     }
 
     private val uninstallResultLauncher = registerForActivityResult(
@@ -163,7 +167,7 @@ class MainActivity : AppCompatActivity() {
         builder.setView(view)
         builder.setPositiveButton("Salvar") { _, _ ->
             val newSize = sizes[spinnerSize.selectedItemPosition].toFloat()
-            val newStyle = styleValues[spinnerStyle.selectedItemPosition]
+            val newStyle = styleValues[spinnerSize.selectedItemPosition]
             saveFontSize(newSize)
             saveFontStyle(newStyle)
             currentRecyclerAdapter.updateStyles(newSize, newStyle)
@@ -187,6 +191,43 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun launchApp(packageName: String) {
+        if (packageName == SETTINGS_PACKAGE) {
+            authenticateAndLaunch(packageName)
+        } else {
+            executeLaunch(packageName)
+        }
+    }
+
+    private fun authenticateAndLaunch(packageName: String) {
+        val executor: Executor = ContextCompat.getMainExecutor(this)
+        val biometricPrompt = BiometricPrompt(this, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    Toast.makeText(applicationContext, "Erro na autenticação: $errString", Toast.LENGTH_SHORT).show()
+                }
+
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    executeLaunch(packageName)
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    Toast.makeText(applicationContext, "Autenticação falhou", Toast.LENGTH_SHORT).show()
+                }
+            })
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Autenticação Necessária")
+            .setSubtitle("Autentique-se para abrir as Configurações")
+            .setNegativeButtonText("Cancelar")
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
+    }
+
+    private fun executeLaunch(packageName: String) {
         packageManager.getLaunchIntentForPackage(packageName)?.let { startActivity(it) }
     }
 
