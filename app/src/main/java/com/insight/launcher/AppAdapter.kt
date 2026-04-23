@@ -6,9 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 
-class AppAdapter(private val apps: List<AppItem>, private val onAppClick: (AppItem) -> Unit) :
+class AppAdapter(
+    private val apps: List<AppItem>,
+    private val onAppClick: (AppItem) -> Unit,
+    private val onAppLongClick: (AppItem) -> Unit
+) :
     RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
 
     class AppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -27,6 +32,10 @@ class AppAdapter(private val apps: List<AppItem>, private val onAppClick: (AppIt
         holder.label.text = app.label
         holder.icon.setImageDrawable(app.icon)
         holder.itemView.setOnClickListener { onAppClick(app) }
+        holder.itemView.setOnLongClickListener {
+            onAppLongClick(app)
+            true
+        }
     }
 
     override fun getItemCount() = apps.size

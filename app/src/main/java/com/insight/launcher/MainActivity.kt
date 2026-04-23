@@ -2,9 +2,12 @@ package com.insight.launcher
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.FrameLayout
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,9 +34,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         val apps = getInstalledApps()
-        val adapter = AppAdapter(apps) { app ->
-            launchApp(app.packageName)
-        }
+        val adapter = AppAdapter(
+            apps,
+            onAppClick = { app ->
+                launchApp(app.packageName)
+            },
+            onAppLongClick = { app ->
+                showAppOptionsDialog(app)
+            }
+        )
         recyclerView.adapter = adapter
     }
 
@@ -56,6 +65,33 @@ class MainActivity : AppCompatActivity() {
                     recyclerView.background = placeholder
                 }
             })
+    }
+
+    private fun showAppOptionsDialog(app: AppItem) {
+        val options = arrayOf("Informações do app", "Desinstalar")
+        AlertDialog.Builder(this)
+            .setTitle(app.label)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> openAppInfo(app.packageName)
+                    1 -> uninstallApp(app.packageName)
+                }
+            }
+            .show()
+    }
+
+    private fun openAppInfo(packageName: String) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.parse("package:$packageName")
+        }
+        startActivity(intent)
+    }
+
+    private fun uninstallApp(packageName: String) {
+        val intent = Intent(Intent.ACTION_DELETE).apply {
+            data = Uri.parse("package:$packageName")
+        }
+        startActivity(intent)
     }
 
     private fun getInstalledApps(): List<AppItem> {
