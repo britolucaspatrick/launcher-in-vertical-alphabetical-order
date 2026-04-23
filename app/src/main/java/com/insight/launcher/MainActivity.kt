@@ -3,12 +3,15 @@ package com.insight.launcher
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.FrameLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.bumptech.glide.Glide
+import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,6 +21,8 @@ class MainActivity : AppCompatActivity() {
 
         val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(this, 5)
+
+        loadBackgroundImage(recyclerView)
 
         ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -30,6 +35,27 @@ class MainActivity : AppCompatActivity() {
             launchApp(app.packageName)
         }
         recyclerView.adapter = adapter
+    }
+
+    private fun loadBackgroundImage(recyclerView: RecyclerView) {
+        val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+        val imageUrl = "https://picsum.photos/1080/2160?random=$dayOfYear&nature"
+
+        Glide.with(this)
+            .load(imageUrl)
+            .centerCrop()
+            .into(object : com.bumptech.glide.request.target.CustomTarget<android.graphics.drawable.Drawable>() {
+                override fun onResourceReady(
+                    resource: android.graphics.drawable.Drawable,
+                    transition: com.bumptech.glide.request.transition.Transition<in android.graphics.drawable.Drawable>?
+                ) {
+                    recyclerView.background = resource
+                }
+
+                override fun onLoadCleared(placeholder: android.graphics.drawable.Drawable?) {
+                    recyclerView.background = placeholder
+                }
+            })
     }
 
     private fun getInstalledApps(): List<AppItem> {
