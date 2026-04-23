@@ -55,21 +55,30 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
 
-        recyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = GridLayoutManager(this, 5)
+        try {
+            enableEdgeToEdge()
+            setContentView(R.layout.activity_main)
 
-        loadBackgroundImage(recyclerView)
+            recyclerView = findViewById(R.id.recyclerView)
+            recyclerView.layoutManager = GridLayoutManager(this, 5)
 
-        ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+            loadBackgroundImage(recyclerView)
+
+            ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+                insets
+            }
+
+            setupAppsList()
+        } catch (e: SecurityException) {
+            Log.e(TAG, "SecurityException during app initialization: ${e.message}", e)
+            showFrozenAppDialog()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error during app initialization: ${e.message}", e)
+            showGenericErrorDialog()
         }
-
-        setupAppsList()
     }
 
     private fun setupAppsList() {
@@ -225,5 +234,38 @@ class MainActivity : AppCompatActivity() {
             // App is not installed
             false
         }
+    }
+
+    private fun showFrozenAppDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("App Congelado")
+            .setMessage("Este app está congelado pelo sistema. Para usar o launcher, descongele o app nas configurações do dispositivo ou gerenciador de apps.")
+            .setPositiveButton("Abrir Configurações") { _, _ ->
+                try {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to open app settings: ${e.message}")
+                }
+                finish()
+            }
+            .setNegativeButton("Fechar") { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun showGenericErrorDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Erro")
+            .setMessage("Ocorreu um erro inesperado ao iniciar o app. Tente reiniciar o dispositivo.")
+            .setPositiveButton("OK") { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
+            .show()
     }
 }
