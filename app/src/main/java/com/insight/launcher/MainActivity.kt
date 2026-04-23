@@ -32,7 +32,9 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.target.Target
+import com.bumptech.glide.request.transition.Transition
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.insight.launcher.data.repository.AppRepositoryImpl
 import com.insight.launcher.domain.usecase.GetInstalledAppsUseCase
@@ -46,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var shimmerContainer: ShimmerFrameLayout
     private lateinit var currentRecyclerAdapter: AppAdapter
     private var lastUninstalledPackage: String? = null
+    private var nextDrawable: Drawable? = null
     
     private val repository by lazy { AppRepositoryImpl(this) }
     private val getInstalledAppsUseCase by lazy { GetInstalledAppsUseCase(repository) }
@@ -132,12 +135,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadBackgroundImage() {
+        if (nextDrawable != null) {
+            backgroundImageView.setImageDrawable(nextDrawable)
+            shimmerContainer.stopShimmer()
+            shimmerContainer.visibility = View.GONE
+            prefetchNextImage()
+            return
+        }
+
         backgroundImageView.setImageDrawable(null)
         shimmerContainer.startShimmer()
         shimmerContainer.visibility = View.VISIBLE
         
         val randomSeed = System.currentTimeMillis()
-        val imageUrl = "https://picsum.photos/1080/2160?random=$randomSeed&nature"
+        val imageUrl = "https://loremflickr.com/1080/1920/cars,luxury/all?random=$randomSeed"
         
         Glide.with(this)
             .load(imageUrl)
@@ -151,6 +162,7 @@ class MainActivity : AppCompatActivity() {
                 ): Boolean {
                     shimmerContainer.stopShimmer()
                     shimmerContainer.visibility = View.GONE
+                    prefetchNextImage()
                     return false
                 }
 
@@ -163,10 +175,28 @@ class MainActivity : AppCompatActivity() {
                 ): Boolean {
                     shimmerContainer.stopShimmer()
                     shimmerContainer.visibility = View.GONE
+                    prefetchNextImage()
                     return false
                 }
             })
             .into(backgroundImageView)
+    }
+
+    private fun prefetchNextImage() {
+        val randomSeed = System.currentTimeMillis() + 1
+        val imageUrl = "https://loremflickr.com/1080/1920/cars,luxury/all?random=$randomSeed"
+        
+        Glide.with(this)
+            .load(imageUrl)
+            .centerCrop()
+            .into(object : CustomTarget<Drawable>() {
+                override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+                    nextDrawable = resource
+                }
+                override fun onLoadCleared(placeholder: Drawable?) {
+                    nextDrawable = null
+                }
+            })
     }
 
     private fun showAppOptionsDialog(app: AppUiModel) {
