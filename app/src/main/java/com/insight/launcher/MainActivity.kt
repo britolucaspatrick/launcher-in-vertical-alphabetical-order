@@ -3,6 +3,9 @@ package com.insight.launcher
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.app.Dialog
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
@@ -11,8 +14,10 @@ import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Window
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -136,12 +141,47 @@ class MainActivity : AppCompatActivity() {
             .setTitle(app.label)
             .setItems(optionsList.toTypedArray()) { _, which ->
                 when (optionsList[which]) {
-                    "Informações do app" -> openAppInfo(app.packageName)
+                    "Informações do app" -> {
+                        showCustomConfirmDialog(
+                            app.label,
+                            getString(R.string.info_msg),
+                            { openAppInfo(app.packageName) }
+                        )
+                    }
                     "Configurações do Launcher" -> showLauncherSettingsDialog()
-                    "Desinstalar" -> uninstallApp(app.packageName)
+                    "Desinstalar" -> {
+                        showCustomConfirmDialog(
+                            app.label,
+                            getString(R.string.uninstall_msg),
+                            { uninstallApp(app.packageName) }
+                        )
+                    }
                 }
             }
             .show()
+    }
+
+    private fun showCustomConfirmDialog(title: String, message: String, onConfirm: () -> Unit) {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_confirm)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        val txtTitle = dialog.findViewById<TextView>(R.id.dialogTitle)
+        val txtMessage = dialog.findViewById<TextView>(R.id.dialogMessage)
+        val btnCancel = dialog.findViewById<TextView>(R.id.btnCancel)
+        val btnConfirm = dialog.findViewById<TextView>(R.id.btnConfirm)
+
+        txtTitle.text = title
+        txtMessage.text = message
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnConfirm.setOnClickListener {
+            onConfirm()
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun showLauncherSettingsDialog() {
