@@ -2,26 +2,32 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="8dp"
     android:layout_margin="4dp"
-    android:gravity="center_vertical"
+    android:gravity="center_horizontal"
     android:background="@android:color/transparent">
 
     <ImageView
         android:id="@+id/appIcon"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="8dp" />
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:scaleType="centerInside" />
 
     <TextView
         android:id="@+id/appLabel"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:textSize="14sp"
+        android:textSize="12sp"
         android:singleLine="true"
         android:ellipsize="end"
-        android:textColor="@android:color/white" />
+        android:textColor="@android:color/white"
+        android:gravity="center"
+        android:layout_marginTop="4dp"
+        android:textStyle="bold"
+        android:shadowColor="@android:color/black"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2" />
 
 </LinearLayout>

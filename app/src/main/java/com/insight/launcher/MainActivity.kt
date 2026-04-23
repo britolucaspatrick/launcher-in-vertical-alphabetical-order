@@ -67,9 +67,15 @@ class MainActivity : AppCompatActivity() {
         val resolveInfos = pm.queryIntentActivities(intent, PackageManager.MATCH_ALL)
         for (resolveInfo in resolveInfos) {
             val appInfo = resolveInfo.activityInfo.applicationInfo
+            val packageName = appInfo.packageName
+
+            // Skip the launcher app itself
+            if (packageName == this.packageName) {
+                continue
+            }
+
             val label = pm.getApplicationLabel(appInfo).toString()
             val icon = pm.getApplicationIcon(appInfo)
-            val packageName = appInfo.packageName
             apps.add(AppItem(label, icon, packageName))
         }
         return apps.sortedBy { it.label }
