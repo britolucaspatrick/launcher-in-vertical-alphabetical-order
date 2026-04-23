@@ -1,16 +1,23 @@
 package com.insight.launcher
 
+import android.app.Dialog
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import android.view.Gravity
+import android.view.View
+import android.view.Window
+import android.view.WindowManager
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -108,19 +115,44 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showAppOptionsDialog(app: AppUiModel) {
-        val canUninstall = repository.canUninstallApp(app.packageName)
-        val optionsList = mutableListOf("Informações do app")
-        if (canUninstall) optionsList.add("Desinstalar")
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_app_options)
+        
+        val window = dialog.window
+        window?.let {
+            it.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            val params = it.attributes
+            params.gravity = Gravity.BOTTOM
+            params.width = WindowManager.LayoutParams.MATCH_PARENT
+            params.y = 100 // Distância do fundo
+            it.attributes = params
+        }
 
-        AlertDialog.Builder(this)
-            .setTitle(app.label)
-            .setItems(optionsList.toTypedArray()) { _, which ->
-                when (optionsList[which]) {
-                    "Informações do app" -> openAppInfo(app.packageName)
-                    "Desinstalar" -> uninstallApp(app.packageName)
-                }
-            }
-            .show()
+        val txtTitle = dialog.findViewById<TextView>(R.id.dialogTitle)
+        val btnInfo = dialog.findViewById<TextView>(R.id.btnInfo)
+        val btnUninstall = dialog.findViewById<TextView>(R.id.btnUninstall)
+        val divider = dialog.findViewById<View>(R.id.divider)
+
+        txtTitle.text = app.label
+        
+        val canUninstall = repository.canUninstallApp(app.packageName)
+        if (!canUninstall) {
+            btnUninstall.visibility = View.GONE
+            divider.visibility = View.GONE
+        }
+
+        btnInfo.setOnClickListener {
+            openAppInfo(app.packageName)
+            dialog.dismiss()
+        }
+
+        btnUninstall.setOnClickListener {
+            uninstallApp(app.packageName)
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun openAppInfo(packageName: String) {
