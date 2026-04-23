@@ -12,7 +12,9 @@ import androidx.recyclerview.widget.RecyclerView
 class AppAdapter(
     private val apps: List<AppItem>,
     private val onAppClick: (AppItem) -> Unit,
-    private val onAppLongClick: (AppItem) -> Unit
+    private val onAppLongClick: (AppItem) -> Unit,
+    private val fontSize: Float,
+    private val fontStyle: Int
 ) :
     RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
 
@@ -31,6 +33,11 @@ class AppAdapter(
         val app = apps[position]
         holder.label.text = app.label
         holder.icon.setImageDrawable(app.icon)
+
+        // Apply font settings from MainActivity
+        holder.label.textSize = fontSize
+        holder.label.setTypeface(null, fontStyle)
+
         holder.itemView.setOnClickListener { onAppClick(app) }
         holder.itemView.setOnLongClickListener {
             onAppLongClick(app)

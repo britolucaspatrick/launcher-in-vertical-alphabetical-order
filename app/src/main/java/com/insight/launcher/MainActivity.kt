@@ -1,13 +1,21 @@
 package com.insight.launcher
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import android.util.TypedValue
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,38 +32,33 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var currentRecyclerAdapter: AppAdapter
     private var lastUninstalledPackage: String? = null
+    private lateinit var sharedPreferences: SharedPreferences
 
     companion object {
         private const val TAG = "LauncherDebug"
+        const val PREFS_NAME = "LauncherPrefs"
+        const val KEY_FONT_SIZE = "fontSize"
+        const val KEY_FONT_STYLE = "fontStyle"
+        const val DEFAULT_FONT_SIZE = 14f 
+        const val DEFAULT_FONT_STYLE = Typeface.BOLD
     }
 
     private val uninstallResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        Log.d(TAG, "Uninstall result received. Result code: ${result.resultCode}, Data: ${result.data}")
-
-        // Add a delay to allow system to update package information
         Handler(Looper.getMainLooper()).postDelayed({
-            // Check if the app was actually uninstalled
             lastUninstalledPackage?.let { packageName ->
-                Log.d(TAG, "Checking if app $packageName was uninstalled")
-                val isInstalled = isAppInstalled(packageName)
-                Log.d(TAG, "App $packageName is installed: $isInstalled")
-
-                if (!isInstalled) {
-                    Log.d(TAG, "App was uninstalled, refreshing list")
+                if (!isAppInstalled(packageName)) {
                     refreshAppsList()
-                } else {
-                    Log.d(TAG, "App was not uninstalled, keeping list as is")
                 }
-            } ?: Log.d(TAG, "No package tracked for uninstall")
-
+            }
             lastUninstalledPackage = null
-        }, 2000) // 2 second delay
+        }, 2000)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         try {
             enableEdgeToEdge()
@@ -73,194 +76,132 @@ class MainActivity : AppCompatActivity() {
             }
 
             setupAppsList()
-        } catch (e: SecurityException) {
-            Log.e(TAG, "SecurityException during app initialization: ${e.message}", e)
-            showFrozenAppDialog()
         } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error during app initialization: ${e.message}", e)
-            showGenericErrorDialog()
+            Log.e(TAG, "Error: ${e.message}", e)
         }
     }
 
     private fun setupAppsList() {
-        Log.d(TAG, "Setting up apps list")
         val apps = getInstalledApps()
-        Log.d(TAG, "Loaded ${apps.size} apps")
         currentRecyclerAdapter = AppAdapter(
             apps,
-            onAppClick = { app ->
-                launchApp(app.packageName)
-            },
-            onAppLongClick = { app ->
-                showAppOptionsDialog(app)
-            }
+            onAppClick = { app -> launchApp(app.packageName) },
+            onAppLongClick = { app -> showAppOptionsDialog(app) },
+            fontSize = getSavedFontSize(),
+            fontStyle = getSavedFontStyle()
         )
         recyclerView.adapter = currentRecyclerAdapter
     }
 
     private fun refreshAppsList() {
-        Log.d(TAG, "Refreshing apps list")
         setupAppsList()
-        showUninstalledPopup()
-    }
-
-    private fun showUninstalledPopup() {
-        Toast.makeText(this, "App desinstalado", Toast.LENGTH_SHORT).show()
     }
 
     private fun loadBackgroundImage(recyclerView: RecyclerView) {
         val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
         val imageUrl = "https://picsum.photos/1080/2160?random=$dayOfYear&nature"
-
-        Glide.with(this)
-            .load(imageUrl)
-            .centerCrop()
-            .into(object : com.bumptech.glide.request.target.CustomTarget<android.graphics.drawable.Drawable>() {
-                override fun onResourceReady(
-                    resource: android.graphics.drawable.Drawable,
-                    transition: com.bumptech.glide.request.transition.Transition<in android.graphics.drawable.Drawable>?
-                ) {
-                    recyclerView.background = resource
-                }
-
-                override fun onLoadCleared(placeholder: android.graphics.drawable.Drawable?) {
-                    recyclerView.background = placeholder
-                }
-            })
-    }
-
-    private fun canUninstallApp(packageName: String): Boolean {
-        return try {
-            val applicationInfo = packageManager.getApplicationInfo(packageName, 0)
-            val isSystemApp = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
-            val canUninstall = !isSystemApp
-            Log.d(TAG, "App $packageName - isSystemApp: $isSystemApp, canUninstall: $canUninstall")
-            canUninstall
-        } catch (e: PackageManager.NameNotFoundException) {
-            Log.d(TAG, "App $packageName not found when checking if can uninstall")
-            false
-        }
+        Glide.with(this).load(imageUrl).centerCrop().into(object : com.bumptech.glide.request.target.CustomTarget<android.graphics.drawable.Drawable>() {
+            override fun onResourceReady(resource: android.graphics.drawable.Drawable, transition: com.bumptech.glide.request.transition.Transition<in android.graphics.drawable.Drawable>?) {
+                recyclerView.background = resource
+            }
+            override fun onLoadCleared(placeholder: android.graphics.drawable.Drawable?) {
+                recyclerView.background = placeholder
+            }
+        })
     }
 
     private fun showAppOptionsDialog(app: AppItem) {
         val canUninstall = canUninstallApp(app.packageName)
-        Log.d(TAG, "Showing options for ${app.label} (${app.packageName}) - canUninstall: $canUninstall")
-
-        val optionsList = mutableListOf("Informações do app")
-        if (canUninstall) {
-            optionsList.add("Desinstalar")
-        }
-
-        val options = optionsList.toTypedArray()
-        Log.d(TAG, "Options shown: ${options.joinToString()}")
+        val optionsList = mutableListOf("Informações do app", "Configurações do Launcher")
+        if (canUninstall) optionsList.add("Desinstalar")
 
         AlertDialog.Builder(this)
             .setTitle(app.label)
-            .setItems(options) { _, which ->
-                Log.d(TAG, "User selected option $which for ${app.label}")
-                when (which) {
-                    0 -> openAppInfo(app.packageName)
-                    1 -> uninstallApp(app.packageName)
+            .setItems(optionsList.toTypedArray()) { _, which ->
+                when (optionsList[which]) {
+                    "Informações do app" -> openAppInfo(app.packageName)
+                    "Configurações do Launcher" -> showLauncherSettingsDialog()
+                    "Desinstalar" -> uninstallApp(app.packageName)
                 }
             }
             .show()
     }
 
-    private fun openAppInfo(packageName: String) {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.parse("package:$packageName")
+    private fun showLauncherSettingsDialog() {
+        val sizes = arrayOf("10", "12", "14", "16", "18", "20")
+        val styles = arrayOf("Normal", "Negrito", "Itálico", "Negrito Itálico")
+        val styleValues = intArrayOf(Typeface.NORMAL, Typeface.BOLD, Typeface.ITALIC, Typeface.BOLD_ITALIC)
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Configurações de Texto")
+
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_settings, null)
+        val spinnerSize = view.findViewById<Spinner>(R.id.spinnerSize)
+        val spinnerStyle = view.findViewById<Spinner>(R.id.spinnerStyle)
+
+        spinnerSize.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sizes)
+        spinnerStyle.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, styles)
+
+        // Set current values
+        val currentSize = getSavedFontSize().toInt().toString()
+        spinnerSize.setSelection(sizes.indexOf(currentSize).coerceAtLeast(0))
+        val currentStyle = getSavedFontStyle()
+        spinnerStyle.setSelection(styleValues.indexOf(currentStyle).coerceAtLeast(0))
+
+        builder.setView(view)
+        builder.setPositiveButton("Salvar") { _, _ ->
+            val newSize = sizes[spinnerSize.selectedItemPosition].toFloat()
+            val newStyle = styleValues[spinnerStyle.selectedItemPosition]
+            saveFontSize(newSize)
+            saveFontStyle(newStyle)
+            refreshAppsList()
+            Toast.makeText(this, "Configurações aplicadas", Toast.LENGTH_SHORT).show()
         }
-        startActivity(intent)
+        builder.setNegativeButton("Cancelar", null)
+        builder.show()
+    }
+
+    private fun openAppInfo(packageName: String) {
+        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.parse("package:$packageName")
+        })
     }
 
     private fun uninstallApp(packageName: String) {
-        Log.d(TAG, "Starting uninstall process for $packageName")
-        val intent = Intent(Intent.ACTION_DELETE).apply {
-            data = Uri.parse("package:$packageName")
-        }
         lastUninstalledPackage = packageName
-        Log.d(TAG, "Launching uninstall intent for $packageName")
-        uninstallResultLauncher.launch(intent)
+        uninstallResultLauncher.launch(Intent(Intent.ACTION_DELETE).apply {
+            data = Uri.parse("package:$packageName")
+        })
     }
 
     private fun getInstalledApps(): List<AppItem> {
         val pm = packageManager
         val apps = mutableListOf<AppItem>()
-        val intent = Intent(Intent.ACTION_MAIN, null).apply {
-            addCategory(Intent.CATEGORY_LAUNCHER)
-        }
+        val intent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
         val resolveInfos = pm.queryIntentActivities(intent, PackageManager.MATCH_ALL)
-        Log.d(TAG, "Found ${resolveInfos.size} resolve infos")
         
         for (resolveInfo in resolveInfos) {
             val appInfo = resolveInfo.activityInfo.applicationInfo
-            val packageName = appInfo.packageName
-            val label = pm.getApplicationLabel(appInfo).toString()
-
-            // Skip the launcher app itself
-            if (packageName == this.packageName) {
-                Log.d(TAG, "Skipping launcher app: $packageName")
-                continue
-            }
-
-            Log.d(TAG, "Adding app: $label ($packageName)")
-            val icon = pm.getApplicationIcon(appInfo)
-            apps.add(AppItem(label, icon, packageName))
+            if (appInfo.packageName == packageName) continue
+            apps.add(AppItem(pm.getApplicationLabel(appInfo).toString(), pm.getApplicationIcon(appInfo), appInfo.packageName))
         }
-        
-        val sortedApps = apps.sortedBy { it.label }
-        Log.d(TAG, "Returning ${sortedApps.size} sorted apps")
-        return sortedApps
+        return apps.sortedBy { it.label }
     }
 
     private fun launchApp(packageName: String) {
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
-        if (intent != null) {
-            startActivity(intent)
-        }
+        packageManager.getLaunchIntentForPackage(packageName)?.let { startActivity(it) }
     }
 
     private fun isAppInstalled(packageName: String): Boolean {
-        return try {
-            val applicationInfo = packageManager.getApplicationInfo(packageName, 0)
-            // App is considered installed if we can retrieve its application info
-            true
-        } catch (e: PackageManager.NameNotFoundException) {
-            // App is not installed
-            false
-        }
+        return try { packageManager.getApplicationInfo(packageName, 0); true } catch (e: Exception) { false }
     }
 
-    private fun showFrozenAppDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("App Congelado")
-            .setMessage("Este app está congelado pelo sistema. Para usar o launcher, descongele o app nas configurações do dispositivo ou gerenciador de apps.")
-            .setPositiveButton("Abrir Configurações") { _, _ ->
-                try {
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                        data = Uri.parse("package:$packageName")
-                    }
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to open app settings: ${e.message}")
-                }
-                finish()
-            }
-            .setNegativeButton("Fechar") { _, _ ->
-                finish()
-            }
-            .setCancelable(false)
-            .show()
+    private fun canUninstallApp(packageName: String): Boolean {
+        return try { (packageManager.getApplicationInfo(packageName, 0).flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0 } catch (e: Exception) { false }
     }
 
-    private fun showGenericErrorDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Erro")
-            .setMessage("Ocorreu um erro inesperado ao iniciar o app. Tente reiniciar o dispositivo.")
-            .setPositiveButton("OK") { _, _ ->
-                finish()
-            }
-            .setCancelable(false)
-            .show()
-    }
+    fun saveFontSize(size: Float) = sharedPreferences.edit().putFloat(KEY_FONT_SIZE, size).apply()
+    fun getSavedFontSize(): Float = sharedPreferences.getFloat(KEY_FONT_SIZE, DEFAULT_FONT_SIZE)
+    fun saveFontStyle(style: Int) = sharedPreferences.edit().putInt(KEY_FONT_STYLE, style).apply()
+    fun getSavedFontStyle(): Int = sharedPreferences.getInt(KEY_FONT_STYLE, DEFAULT_FONT_STYLE)
 }
