@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
@@ -26,12 +25,17 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.net.toUri
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.DecodeFormat
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.request.transition.Transition
@@ -122,9 +126,10 @@ class MainActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         currentRecyclerAdapter = AppAdapter(
             emptyList(),
-            onAppClick = { app -> launchApp(app.packageName) },
-            onAppLongClick = { app -> showAppOptionsDialog(app) }
-        )
+            onAppClick = { app -> launchApp(app.packageName) }
+        ) { app ->
+            showAppOptionsDialog(app)
+        }
         recyclerView.adapter = currentRecyclerAdapter
     }
 
@@ -148,9 +153,14 @@ class MainActivity : AppCompatActivity() {
         shimmerContainer.visibility = View.VISIBLE
         
         val randomSeed = System.currentTimeMillis()
-        val imageUrl = "https://loremflickr.com/1080/1920/cars,luxury/all?random=$randomSeed"
+        val imageUrl = "https://loremflickr.com/1440/3088/cars,luxury,supercar/all?random=$randomSeed"
         
         Glide.with(this)
+            .applyDefaultRequestOptions(
+                RequestOptions()
+                    .format(DecodeFormat.PREFER_ARGB_8888)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+            )
             .load(imageUrl)
             .centerCrop()
             .listener(object : RequestListener<Drawable> {
@@ -184,9 +194,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun prefetchNextImage() {
         val randomSeed = System.currentTimeMillis() + 1
-        val imageUrl = "https://loremflickr.com/1080/1920/cars,luxury/all?random=$randomSeed"
+        val imageUrl = "https://loremflickr.com/1440/3088/cars,luxury,supercar/all?random=$randomSeed"
         
         Glide.with(this)
+            .applyDefaultRequestOptions(
+                RequestOptions()
+                    .format(DecodeFormat.PREFER_ARGB_8888)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+            )
             .load(imageUrl)
             .centerCrop()
             .into(object : CustomTarget<Drawable>() {
@@ -206,7 +221,7 @@ class MainActivity : AppCompatActivity() {
         
         val window = dialog.window
         window?.let {
-            it.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            it.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             val params = it.attributes
             params.gravity = Gravity.BOTTOM
             params.width = WindowManager.LayoutParams.MATCH_PARENT
@@ -241,16 +256,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openAppInfo(packageName: String) {
-        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.parse("package:$packageName")
-        })
+        startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = "package:$packageName".toUri()
+            }
+        )
     }
 
     private fun uninstallApp(packageName: String) {
         lastUninstalledPackage = packageName
-        uninstallResultLauncher.launch(Intent(Intent.ACTION_DELETE).apply {
-            data = Uri.parse("package:$packageName")
-        })
+        uninstallResultLauncher.launch(
+            Intent(Intent.ACTION_DELETE).apply {
+                data = "package:$packageName".toUri()
+            }
+        )
     }
 
     private fun launchApp(packageName: String) {
