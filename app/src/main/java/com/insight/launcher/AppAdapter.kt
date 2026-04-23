@@ -11,9 +11,7 @@ import com.insight.launcher.presentation.model.AppUiModel
 class AppAdapter(
     private var apps: List<AppUiModel>,
     private val onAppClick: (AppUiModel) -> Unit,
-    private val onAppLongClick: (AppUiModel) -> Unit,
-    private var fontSize: Float,
-    private var fontStyle: Int
+    private val onAppLongClick: (AppUiModel) -> Unit
 ) : RecyclerView.Adapter<AppAdapter.AppViewHolder>() {
 
     class AppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -32,9 +30,6 @@ class AppAdapter(
         holder.label.text = app.label
         holder.icon.setImageDrawable(app.icon)
 
-        holder.label.textSize = fontSize
-        holder.label.setTypeface(null, fontStyle)
-
         holder.itemView.setOnClickListener { onAppClick(app) }
         holder.itemView.setOnLongClickListener {
             onAppLongClick(app)
@@ -46,12 +41,6 @@ class AppAdapter(
 
     fun updateApps(newApps: List<AppUiModel>) {
         this.apps = newApps
-        notifyDataSetChanged()
-    }
-
-    fun updateStyles(size: Float, style: Int) {
-        this.fontSize = size
-        this.fontStyle = style
         notifyDataSetChanged()
     }
 }

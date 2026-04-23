@@ -1,24 +1,17 @@
 package com.insight.launcher
 
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.Window
-import android.widget.ArrayAdapter
-import android.widget.Spinner
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -40,7 +33,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var currentRecyclerAdapter: AppAdapter
     private var lastUninstalledPackage: String? = null
-    private lateinit var sharedPreferences: SharedPreferences
     
     private val repository by lazy { AppRepositoryImpl(this) }
     private val getInstalledAppsUseCase by lazy { GetInstalledAppsUseCase(repository) }
@@ -50,11 +42,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "LauncherDebug"
-        const val PREFS_NAME = "LauncherPrefs"
-        const val KEY_FONT_SIZE = "fontSize"
-        const val KEY_FONT_STYLE = "fontStyle"
-        const val DEFAULT_FONT_SIZE = 14f 
-        const val DEFAULT_FONT_STYLE = Typeface.BOLD
     }
 
     private val uninstallResultLauncher = registerForActivityResult(
@@ -72,7 +59,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         try {
             enableEdgeToEdge()
@@ -102,9 +88,7 @@ class MainActivity : AppCompatActivity() {
         currentRecyclerAdapter = AppAdapter(
             emptyList(),
             onAppClick = { app -> launchApp(app.packageName) },
-            onAppLongClick = { app -> showAppOptionsDialog(app) },
-            fontSize = getSavedFontSize(),
-            fontStyle = getSavedFontStyle()
+            onAppLongClick = { app -> showAppOptionsDialog(app) }
         )
         recyclerView.adapter = currentRecyclerAdapter
     }
@@ -130,7 +114,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAppOptionsDialog(app: AppUiModel) {
         val canUninstall = repository.canUninstallApp(app.packageName)
-        val optionsList = mutableListOf("Informações do app", "Configurações do Launcher")
+        val optionsList = mutableListOf("Informações do app")
         if (canUninstall) optionsList.add("Desinstalar")
 
         AlertDialog.Builder(this)
@@ -144,7 +128,6 @@ class MainActivity : AppCompatActivity() {
                             { openAppInfo(app.packageName) }
                         )
                     }
-                    "Configurações do Launcher" -> showLauncherSettingsDialog()
                     "Desinstalar" -> {
                         showCustomConfirmDialog(
                             app.label,
@@ -180,39 +163,6 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun showLauncherSettingsDialog() {
-        val sizes = arrayOf("10", "12", "14", "16", "18", "20")
-        val styles = arrayOf("Normal", "Negrito", "Itálico", "Negrito Itálico")
-        val styleValues = intArrayOf(Typeface.NORMAL, Typeface.BOLD, Typeface.ITALIC, Typeface.BOLD_ITALIC)
-
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Configurações de Texto")
-
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_settings, null)
-        val spinnerSize = view.findViewById<Spinner>(R.id.spinnerSize)
-        val spinnerStyle = view.findViewById<Spinner>(R.id.spinnerStyle)
-
-        spinnerSize.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sizes)
-        spinnerStyle.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, styles)
-
-        val currentSize = getSavedFontSize().toInt().toString()
-        spinnerSize.setSelection(sizes.indexOf(currentSize).coerceAtLeast(0))
-        val currentStyle = getSavedFontStyle()
-        spinnerStyle.setSelection(styleValues.indexOf(currentStyle).coerceAtLeast(0))
-
-        builder.setView(view)
-        builder.setPositiveButton("Salvar") { _, _ ->
-            val newSize = sizes[spinnerSize.selectedItemPosition].toFloat()
-            val newStyle = styleValues[spinnerSize.selectedItemPosition]
-            saveFontSize(newSize)
-            saveFontStyle(newStyle)
-            currentRecyclerAdapter.updateStyles(newSize, newStyle)
-            Toast.makeText(this, "Configurações aplicadas", Toast.LENGTH_SHORT).show()
-        }
-        builder.setNegativeButton("Cancelar", null)
-        builder.show()
-    }
-
     private fun openAppInfo(packageName: String) {
         startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
             data = Uri.parse("package:$packageName")
@@ -233,9 +183,4 @@ class MainActivity : AppCompatActivity() {
     private fun executeLaunch(packageName: String) {
         packageManager.getLaunchIntentForPackage(packageName)?.let { startActivity(it) }
     }
-
-    fun saveFontSize(size: Float) = sharedPreferences.edit().putFloat(KEY_FONT_SIZE, size).apply()
-    fun getSavedFontSize(): Float = sharedPreferences.getFloat(KEY_FONT_SIZE, DEFAULT_FONT_SIZE)
-    fun saveFontStyle(style: Int) = sharedPreferences.edit().putInt(KEY_FONT_STYLE, style).apply()
-    fun getSavedFontStyle(): Int = sharedPreferences.getInt(KEY_FONT_STYLE, DEFAULT_FONT_STYLE)
 }
