@@ -46,6 +46,11 @@ android {
 }
 
 dependencies {
+    constraints {
+        implementation(libs.jdom2) {
+            because("fix XXE vulnerability in transitive dependency (CVE-2021-33813)")
+        }
+    }
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)

@@ -13,6 +13,7 @@ lifecycle = "2.10.0"
 coroutines = "1.10.2"
 recyclerview = "1.4.0"
 shimmer = "0.5.0"
+jdom2 = "2.0.6.1"
 firebaseCrashlytics = "20.0.5"
 firebaseBom = "34.12.0"
 googleGmsGoogleServices = "4.4.4"
@@ -34,6 +35,7 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycle" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+jdom2 = { group = "org.jdom", name = "jdom2", version.ref = "jdom2" }
 shimmer = { group = "com.facebook.shimmer", name = "shimmer", version.ref = "shimmer" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
