@@ -65,6 +65,9 @@ dependencies {
         implementation(libs.bouncycastle.bcprov) {
             because("ensure consistency with bcpkix and fix potential vulnerabilities")
         }
+        implementation(libs.apache.httpclient) {
+            because("fix XSS vulnerability in transitive dependency (CVE-2020-13956)")
+        }
     }
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

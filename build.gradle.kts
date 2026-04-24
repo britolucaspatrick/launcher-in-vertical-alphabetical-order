@@ -20,6 +20,9 @@ buildscript {
             classpath("org.bouncycastle:bcprov-jdk18on:1.84") {
                 because("ensure consistency with bcpkix and fix potential vulnerabilities")
             }
+            classpath("org.apache.httpcomponents:httpclient:4.5.13") {
+                because("fix XSS vulnerability in transitive dependency (CVE-2020-13956)")
+            }
         }
     }
 }
