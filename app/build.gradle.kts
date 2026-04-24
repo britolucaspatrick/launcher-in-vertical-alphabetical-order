@@ -56,6 +56,9 @@ dependencies {
         implementation(libs.jose4j) {
             because("fix DoS via compressed JWE content in transitive dependency")
         }
+        implementation(libs.commons.lang3) {
+            because("fix Uncontrolled Recursion vulnerability in transitive dependency")
+        }
     }
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

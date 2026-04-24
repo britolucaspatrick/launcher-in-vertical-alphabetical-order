@@ -11,6 +11,9 @@ buildscript {
             classpath("org.bitbucket.b_c:jose4j:0.9.6") {
                 because("fix DoS via compressed JWE content in transitive dependency")
             }
+            classpath("org.apache.commons:commons-lang3:3.18.0") {
+                because("fix Uncontrolled Recursion vulnerability in transitive dependency")
+            }
         }
     }
 }
