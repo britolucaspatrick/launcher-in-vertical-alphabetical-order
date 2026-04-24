@@ -18,7 +18,7 @@ Camadas: Data (repositórios), Domain (use cases/modelos), Presentation (Activit
 Tecnologias: Kotlin, Material Components, Glide, RecyclerView.
 Regra de Ouro: Manter a ordem alfabética vertical e separar lógica de sistema (PackageManager) em repositórios.
 Sempre prefira manter a consistência com o código existente em `MainActivity.kt` e `AppRepositoryImpl.kt`.
-Ao final de cada execução, forneça sempre uma sugestão de mensagem de commit (em português) que resuma as alterações feitas."
+Ao final de cada execução, forneça sempre uma sugestão de mensagem de commit (em inglês) que resuma as alterações feitas."
 ---
 
 ### 3. Cursor (IDE)

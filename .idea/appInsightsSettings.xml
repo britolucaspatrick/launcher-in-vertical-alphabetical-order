@@ -23,7 +23,7 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.britoptrck.helptracker" />
+                  <option name="appId" value="com.tdocop.teladoc" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
@@ -37,10 +37,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.insight.launcher" />
+                  <option name="mobileSdkAppId" value="1:273826847343:android:5f141cb840754de2468b9a" />
+                  <option name="projectId" value="launcher-vertical" />
+                  <option name="projectNumber" value="273826847343" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
