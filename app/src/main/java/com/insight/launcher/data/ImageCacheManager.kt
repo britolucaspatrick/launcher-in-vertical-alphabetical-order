@@ -7,6 +7,7 @@ import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import java.io.ByteArrayOutputStream
+import androidx.core.content.edit
 
 class ImageCacheManager(private val context: Context) {
     private val prefs = context.getSharedPreferences("image_cache_prefs", Context.MODE_PRIVATE)
@@ -25,10 +26,10 @@ class ImageCacheManager(private val context: Context) {
     fun rotateImages(): String? {
         val next = getNextBase64()
         if (next != null) {
-            prefs.edit()
-                .putString(KEY_CURRENT, next)
-                .remove(KEY_NEXT)
-                .apply()
+            prefs.edit {
+                putString(KEY_CURRENT, next)
+                    .remove(KEY_NEXT)
+            }
             return next
         }
         return getCurrentBase64()
@@ -58,7 +59,7 @@ class ImageCacheManager(private val context: Context) {
                 val byteArray = outputStream.toByteArray()
                 val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
 
-                prefs.edit().putString(KEY_NEXT, base64String).apply()
+                prefs.edit { putString(KEY_NEXT, base64String) }
                 Log.d("ImageCacheManager", "Next image saved to SharedPreferences (Base64)")
                 onComplete(true)
             } catch (e: Exception) {
