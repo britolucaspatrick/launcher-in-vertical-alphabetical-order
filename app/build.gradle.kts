@@ -46,32 +46,6 @@ android {
 }
 
 dependencies {
-    constraints {
-        implementation(libs.jdom2) {
-            because("fix XXE vulnerability in transitive dependency (CVE-2021-33813)")
-        }
-        implementation(libs.netty.codec.http2) {
-            because("fix HTTP/2 CONTINUATION Frame Flood DoS in transitive dependency")
-        }
-        implementation(libs.jose4j) {
-            because("fix DoS via compressed JWE content in transitive dependency")
-        }
-        implementation(libs.commons.lang3) {
-            because("fix Uncontrolled Recursion vulnerability in transitive dependency")
-        }
-        implementation(libs.bouncycastle.bcpkix) {
-            because("fix broken or risky cryptographic algorithm vulnerability")
-        }
-        implementation(libs.bouncycastle.bcprov) {
-            because("ensure consistency with bcpkix and fix potential vulnerabilities")
-        }
-        implementation(libs.apache.httpclient) {
-            because("fix XSS vulnerability in transitive dependency (CVE-2020-13956)")
-        }
-        implementation(libs.guava) {
-            because("fix Information Disclosure vulnerability in transitive dependency (CVE-2023-2976)")
-        }
-    }
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
