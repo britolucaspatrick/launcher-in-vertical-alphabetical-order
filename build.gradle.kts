@@ -23,6 +23,9 @@ buildscript {
             classpath("org.apache.httpcomponents:httpclient:4.5.13") {
                 because("fix XSS vulnerability in transitive dependency (CVE-2020-13956)")
             }
+            classpath("com.google.guava:guava:33.4.0-android") {
+                because("fix Information Disclosure vulnerability in transitive dependency (CVE-2023-2976)")
+            }
         }
     }
 }

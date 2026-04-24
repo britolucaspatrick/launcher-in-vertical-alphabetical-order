@@ -68,6 +68,9 @@ dependencies {
         implementation(libs.apache.httpclient) {
             because("fix XSS vulnerability in transitive dependency (CVE-2020-13956)")
         }
+        implementation(libs.guava) {
+            because("fix Information Disclosure vulnerability in transitive dependency (CVE-2023-2976)")
+        }
     }
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
