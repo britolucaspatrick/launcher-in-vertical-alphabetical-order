@@ -17,3 +17,4 @@ local.properties
 *.hprof
 /.idea
 app/google-services.json
+keystore.jks
