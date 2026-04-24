@@ -107,6 +107,14 @@ class MainActivity : AppCompatActivity() {
             val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
             registerReceiver(screenOffReceiver, filter)
 
+            val statusBarBg = findViewById<View>(R.id.statusBarBackground)
+            ViewCompat.setOnApplyWindowInsetsListener(statusBarBg) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.layoutParams.height = systemBars.top
+                v.requestLayout()
+                insets
+            }
+
             ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 val extraTopPadding = (8 * resources.displayMetrics.density).toInt()
