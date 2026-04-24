@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.util.Base64
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -141,24 +142,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadBackgroundImage(isRotation: Boolean = false) {
-        val imageFile = if (isRotation) {
+        val base64Image = if (isRotation) {
             imageCacheManager.rotateImages()
         } else {
-            imageCacheManager.getCurrentFile() ?: imageCacheManager.rotateImages()
+            imageCacheManager.getCurrentBase64() ?: imageCacheManager.rotateImages()
         }
 
-        if (imageFile != null) {
+        if (base64Image != null) {
             shimmerContainer.stopShimmer()
             shimmerContainer.visibility = View.GONE
             
-            Glide.with(this)
-                .load(imageFile)
-                .format(DecodeFormat.PREFER_ARGB_8888)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .centerCrop()
-                .into(backgroundImageView)
+            try {
+                val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
+                val requestOptions = RequestOptions()
+                    .format(DecodeFormat.PREFER_ARGB_8888)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .centerCrop()
+
+                Glide.with(this)
+                    .load(imageBytes)
+                    .apply(requestOptions)
+                    .into(backgroundImageView)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error decoding base64 image", e)
+            }
             
-            if (isRotation || imageCacheManager.getNextFile() == null) {
+            if (isRotation || imageCacheManager.getNextBase64() == null) {
                 imageCacheManager.prefetchNextImage()
             }
             return

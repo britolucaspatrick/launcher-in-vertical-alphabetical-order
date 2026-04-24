@@ -1,34 +1,41 @@
 package com.insight.launcher.data
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.util.Base64
 import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import java.io.File
+import java.io.ByteArrayOutputStream
 
 class ImageCacheManager(private val context: Context) {
-    private val currentFile = File(context.filesDir, "current_bg.jpg")
-    private val nextFile = File(context.filesDir, "next_bg.jpg")
+    private val prefs = context.getSharedPreferences("image_cache_prefs", Context.MODE_PRIVATE)
 
-    fun getCurrentFile(): File? = if (currentFile.exists()) currentFile else null
-    fun getNextFile(): File? = if (nextFile.exists()) nextFile else null
+    companion object {
+        private const val KEY_CURRENT = "current_image_base64"
+        private const val KEY_NEXT = "next_image_base64"
+    }
+
+    fun getCurrentBase64(): String? = prefs.getString(KEY_CURRENT, null)
+    fun getNextBase64(): String? = prefs.getString(KEY_NEXT, null)
 
     /**
-     * Move a próxima imagem para a posição atual.
-     * @return O novo arquivo atual, ou null se nenhuma próxima imagem estava disponível.
+     * Move a próxima imagem para a posição atual e limpa a próxima.
      */
-    fun rotateImages(): File? {
-        if (nextFile.exists()) {
-            if (currentFile.exists()) currentFile.delete()
-            if (nextFile.renameTo(currentFile)) {
-                return currentFile
-            }
+    fun rotateImages(): String? {
+        val next = getNextBase64()
+        if (next != null) {
+            prefs.edit()
+                .putString(KEY_CURRENT, next)
+                .remove(KEY_NEXT)
+                .apply()
+            return next
         }
-        return if (currentFile.exists()) currentFile else null
+        return getCurrentBase64()
     }
 
     /**
-     * Baixa uma nova imagem e salva como a próxima imagem.
+     * Baixa a imagem, converte para Base64 (WebP) e salva nas SharedPreferences.
      */
     fun prefetchNextImage(onComplete: (Boolean) -> Unit = {}) {
         val randomSeed = System.currentTimeMillis() + (0..1000).random()
@@ -36,19 +43,26 @@ class ImageCacheManager(private val context: Context) {
 
         Thread {
             try {
-                // Download para o cache do Glide primeiro (sem persistência de disco do Glide)
-                val futureTarget = Glide.with(context)
-                    .asFile()
+                // Download do Bitmap via Glide
+                val bitmap = Glide.with(context)
+                    .asBitmap()
                     .load(imageUrl)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
                     .submit()
+                    .get()
 
-                val file = futureTarget.get()
-                file.copyTo(nextFile, overwrite = true)
-                Log.d("ImageCacheManager", "Next image prefetched to ${nextFile.absolutePath}")
+                // Compressão eficiente para WebP
+                val outputStream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.WEBP, 75, outputStream)
+                val byteArray = outputStream.toByteArray()
+                val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+
+                prefs.edit().putString(KEY_NEXT, base64String).apply()
+                Log.d("ImageCacheManager", "Next image saved to SharedPreferences (Base64)")
                 onComplete(true)
             } catch (e: Exception) {
-                Log.e("ImageCacheManager", "Error prefetching image", e)
+                Log.e("ImageCacheManager", "Error prefetching image to Base64", e)
                 onComplete(false)
             }
         }.start()
