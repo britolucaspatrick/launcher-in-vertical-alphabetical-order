@@ -40,6 +40,7 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.request.transition.Transition
 import com.facebook.shimmer.ShimmerFrameLayout
+import com.insight.launcher.data.ImageCacheManager
 import com.insight.launcher.data.repository.AppRepositoryImpl
 import com.insight.launcher.domain.usecase.GetInstalledAppsUseCase
 import com.insight.launcher.presentation.MainViewModel
@@ -52,7 +53,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var shimmerContainer: ShimmerFrameLayout
     private lateinit var currentRecyclerAdapter: AppAdapter
     private var lastUninstalledPackage: String? = null
-    private var nextDrawable: Drawable? = null
+    private val imageCacheManager by lazy { ImageCacheManager(this) }
     
     private val repository by lazy { AppRepositoryImpl(this) }
     private val getInstalledAppsUseCase by lazy { GetInstalledAppsUseCase(repository) }
@@ -63,7 +64,7 @@ class MainActivity : AppCompatActivity() {
     private val screenOffReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Intent.ACTION_SCREEN_OFF) {
-                loadBackgroundImage()
+                loadBackgroundImage(true)
             }
         }
     }
@@ -139,12 +140,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadBackgroundImage() {
-        if (nextDrawable != null) {
-            backgroundImageView.setImageDrawable(nextDrawable)
+    private fun loadBackgroundImage(isRotation: Boolean = false) {
+        val imageFile = if (isRotation) {
+            imageCacheManager.rotateImages()
+        } else {
+            imageCacheManager.getCurrentFile() ?: imageCacheManager.rotateImages()
+        }
+
+        if (imageFile != null) {
             shimmerContainer.stopShimmer()
             shimmerContainer.visibility = View.GONE
-            prefetchNextImage()
+            
+            Glide.with(this)
+                .load(imageFile)
+                .format(DecodeFormat.PREFER_ARGB_8888)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .centerCrop()
+                .into(backgroundImageView)
+            
+            if (isRotation || imageCacheManager.getNextFile() == null) {
+                imageCacheManager.prefetchNextImage()
+            }
             return
         }
 
@@ -152,66 +168,16 @@ class MainActivity : AppCompatActivity() {
         shimmerContainer.startShimmer()
         shimmerContainer.visibility = View.VISIBLE
         
-        val randomSeed = System.currentTimeMillis()
-        val imageUrl = "https://loremflickr.com/1440/3088/cars,luxury,supercar/all?random=$randomSeed"
-        
-        Glide.with(this)
-            .applyDefaultRequestOptions(
-                RequestOptions()
-                    .format(DecodeFormat.PREFER_ARGB_8888)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-            )
-            .load(imageUrl)
-            .centerCrop()
-            .listener(object : RequestListener<Drawable> {
-                override fun onLoadFailed(
-                    e: GlideException?,
-                    model: Any?,
-                    target: Target<Drawable>,
-                    isFirstResource: Boolean
-                ): Boolean {
+        imageCacheManager.prefetchNextImage { success ->
+            if (success) {
+                runOnUiThread { loadBackgroundImage(true) }
+            } else {
+                runOnUiThread {
                     shimmerContainer.stopShimmer()
                     shimmerContainer.visibility = View.GONE
-                    prefetchNextImage()
-                    return false
                 }
-
-                override fun onResourceReady(
-                    resource: Drawable,
-                    model: Any,
-                    target: Target<Drawable>?,
-                    dataSource: DataSource,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    shimmerContainer.stopShimmer()
-                    shimmerContainer.visibility = View.GONE
-                    prefetchNextImage()
-                    return false
-                }
-            })
-            .into(backgroundImageView)
-    }
-
-    private fun prefetchNextImage() {
-        val randomSeed = System.currentTimeMillis() + 1
-        val imageUrl = "https://loremflickr.com/1440/3088/cars,luxury,supercar/all?random=$randomSeed"
-        
-        Glide.with(this)
-            .applyDefaultRequestOptions(
-                RequestOptions()
-                    .format(DecodeFormat.PREFER_ARGB_8888)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-            )
-            .load(imageUrl)
-            .centerCrop()
-            .into(object : CustomTarget<Drawable>() {
-                override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-                    nextDrawable = resource
-                }
-                override fun onLoadCleared(placeholder: Drawable?) {
-                    nextDrawable = null
-                }
-            })
+            }
+        }
     }
 
     private fun showAppOptionsDialog(app: AppUiModel) {
