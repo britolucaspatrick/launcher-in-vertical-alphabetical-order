@@ -35,8 +35,25 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assembleDebug
 
-    - name: Upload APK
+    - name: Decode Keystore
+      run: echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
+
+    - name: Build Release APK
+      run: |
+        ./gradlew assembleRelease \
+          -PRELEASE_STORE_FILE=keystore.jks \
+          -PRELEASE_STORE_PASSWORD='${{ secrets.RELEASE_STORE_PASSWORD }}' \
+          -PRELEASE_KEY_ALIAS='${{ secrets.RELEASE_KEY_ALIAS }}' \
+          -PRELEASE_KEY_PASSWORD='${{ secrets.RELEASE_KEY_PASSWORD }}'
+
+    - name: Upload Debug APK
       uses: actions/upload-artifact@v7
       with:
         name: app-debug
         path: app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v7
+      with:
+        name: app-release
+        path: app/build/outputs/apk/release/app-release.apk
