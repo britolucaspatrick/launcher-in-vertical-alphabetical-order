@@ -14,4 +14,9 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="RoundedSquareIcon" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">25%</item>
+    </style>
 </resources>
