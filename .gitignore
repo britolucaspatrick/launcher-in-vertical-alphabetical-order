@@ -16,3 +16,4 @@ local.properties
 /.kotlin/sessions
 *.hprof
 /.idea
+app/google-services.json
