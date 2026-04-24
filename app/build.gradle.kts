@@ -59,6 +59,12 @@ dependencies {
         implementation(libs.commons.lang3) {
             because("fix Uncontrolled Recursion vulnerability in transitive dependency")
         }
+        implementation(libs.bouncycastle.bcpkix) {
+            because("fix broken or risky cryptographic algorithm vulnerability")
+        }
+        implementation(libs.bouncycastle.bcprov) {
+            because("ensure consistency with bcpkix and fix potential vulnerabilities")
+        }
     }
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

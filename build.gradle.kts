@@ -14,6 +14,12 @@ buildscript {
             classpath("org.apache.commons:commons-lang3:3.18.0") {
                 because("fix Uncontrolled Recursion vulnerability in transitive dependency")
             }
+            classpath("org.bouncycastle:bcpkix-jdk18on:1.84") {
+                because("fix broken or risky cryptographic algorithm vulnerability")
+            }
+            classpath("org.bouncycastle:bcprov-jdk18on:1.84") {
+                because("ensure consistency with bcpkix and fix potential vulnerabilities")
+            }
         }
     }
 }

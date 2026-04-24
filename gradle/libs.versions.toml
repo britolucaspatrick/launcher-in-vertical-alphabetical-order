@@ -17,6 +17,7 @@ jdom2 = "2.0.6.1"
 netty = "4.1.132.Final"
 jose4j = "0.9.6"
 commonsLang3 = "3.18.0"
+bouncycastle = "1.84"
 firebaseCrashlytics = "20.0.5"
 firebaseBom = "34.12.0"
 googleGmsGoogleServices = "4.4.4"
@@ -42,6 +43,8 @@ jdom2 = { group = "org.jdom", name = "jdom2", version.ref = "jdom2" }
 netty-codec-http2 = { group = "io.netty", name = "netty-codec-http2", version.ref = "netty" }
 jose4j = { group = "org.bitbucket.b_c", name = "jose4j", version.ref = "jose4j" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commonsLang3" }
+bouncycastle-bcpkix = { group = "org.bouncycastle", name = "bcpkix-jdk18on", version.ref = "bouncycastle" }
+bouncycastle-bcprov = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncycastle" }
 shimmer = { group = "com.facebook.shimmer", name = "shimmer", version.ref = "shimmer" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
