@@ -14,6 +14,7 @@ coroutines = "1.10.2"
 recyclerview = "1.4.0"
 shimmer = "0.5.0"
 jdom2 = "2.0.6.1"
+netty = "4.1.132.Final"
 firebaseCrashlytics = "20.0.5"
 firebaseBom = "34.12.0"
 googleGmsGoogleServices = "4.4.4"
@@ -36,6 +37,7 @@ androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifec
 androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycle" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 jdom2 = { group = "org.jdom", name = "jdom2", version.ref = "jdom2" }
+netty-codec-http2 = { group = "io.netty", name = "netty-codec-http2", version.ref = "netty" }
 shimmer = { group = "com.facebook.shimmer", name = "shimmer", version.ref = "shimmer" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }

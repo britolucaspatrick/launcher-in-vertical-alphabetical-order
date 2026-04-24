@@ -50,6 +50,9 @@ dependencies {
         implementation(libs.jdom2) {
             because("fix XXE vulnerability in transitive dependency (CVE-2021-33813)")
         }
+        implementation(libs.netty.codec.http2) {
+            because("fix HTTP/2 CONTINUATION Frame Flood DoS in transitive dependency")
+        }
     }
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
