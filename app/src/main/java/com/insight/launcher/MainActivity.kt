@@ -109,7 +109,13 @@ class MainActivity : AppCompatActivity() {
 
             ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+                val extraTopPadding = (15 * resources.displayMetrics.density).toInt()
+                v.setPadding(
+                    systemBars.left,
+                    systemBars.top + extraTopPadding,
+                    systemBars.right,
+                    systemBars.bottom
+                )
                 insets
             }
 
