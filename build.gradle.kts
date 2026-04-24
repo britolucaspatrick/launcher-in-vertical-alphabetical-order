@@ -8,6 +8,9 @@ buildscript {
             classpath("io.netty:netty-codec-http2:4.1.132.Final") {
                 because("fix HTTP/2 CONTINUATION Frame Flood DoS in transitive dependency")
             }
+            classpath("org.bitbucket.b_c:jose4j:0.9.6") {
+                because("fix DoS via compressed JWE content in transitive dependency")
+            }
         }
     }
 }

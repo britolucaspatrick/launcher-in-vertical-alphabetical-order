@@ -53,6 +53,9 @@ dependencies {
         implementation(libs.netty.codec.http2) {
             because("fix HTTP/2 CONTINUATION Frame Flood DoS in transitive dependency")
         }
+        implementation(libs.jose4j) {
+            because("fix DoS via compressed JWE content in transitive dependency")
+        }
     }
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
