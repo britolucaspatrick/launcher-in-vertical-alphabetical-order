@@ -39,7 +39,7 @@ class ImageCacheManager(private val context: Context) {
      */
     fun prefetchNextImage(onComplete: (Boolean) -> Unit = {}) {
         val randomSeed = System.currentTimeMillis() + (0..1000).random()
-        val imageUrl = "https://loremflickr.com/1440/3088/cars,luxury,supercar/all?random=$randomSeed"
+        val imageUrl = "https://loremflickr.com/2160/3840/cars,luxury,supercar/all?random=$randomSeed"
 
         Thread {
             try {
