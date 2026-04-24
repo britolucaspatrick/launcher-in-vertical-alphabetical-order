@@ -4,22 +4,28 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Representing a vertical list with a focus on A-Z -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M30,30h48v6H30zM30,45h48v6H30zM30,60h48v6H30zM30,75h48v6H30z" />
-    
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M20,30h6v6h-6zM20,45h6v6h-6zM20,60h6v6h-6zM20,75h6v6h-6z" />
 
-    <!-- A small A and Z to emphasize sorting -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M84,30l-2,0l-4,10h2l1,-2.5h4l1,2.5h2l-4,-10zM83.5,35.5l1.5,-4l1.5,4h-3z" />
-    
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M80,75v2h8v-2l-6,-6h6v-2h-8v2l6,6z" />
+    <group
+        android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:pivotX="54"
+        android:pivotY="54">
+        <!-- Representing a vertical list with a focus on A-Z -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M30,30h48v6H30zM30,45h48v6H30zM30,60h48v6H30zM30,75h48v6H30z" />
+
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M20,30h6v6h-6zM20,45h6v6h-6zM20,60h6v6h-6zM20,75h6v6h-6z" />
+
+        <!-- A small A and Z to emphasize sorting -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M84,30l-2,0l-4,10h2l1,-2.5h4l1,2.5h2l-4,-10zM83.5,35.5l1.5,-4l1.5,4h-3z" />
+
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M80,75v2h8v-2l-6,-6h6v-2h-8v2l6,6z" />
+    </group>
 </vector>
