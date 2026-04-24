@@ -40,3 +40,5 @@ Ao gerar código ou sugerir melhorias:
 4.  **Gerenciamento de Apps**: Ao implementar funções de desinstalar ou abrir info do app, utilize `ActivityResultLauncher` conforme já implementado na `MainActivity`.
 
 Ao responder, priorize a consistência com o estilo atual: código limpo, tipado e com separação clara de responsabilidades.
+
+Sempre forneça uma sugestão de mensagem de commit (em português) ao final de cada execução de tarefa.
