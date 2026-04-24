@@ -1,10 +1,12 @@
 package com.insight.launcher
 
 import android.app.Dialog
+import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -163,6 +165,10 @@ class MainActivity : AppCompatActivity() {
                     .load(imageBytes)
                     .apply(requestOptions)
                     .into(backgroundImageView)
+
+                if (isRotation) {
+                    syncSystemWallpaper(base64Image)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error decoding base64 image", e)
             }
@@ -187,6 +193,27 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun syncSystemWallpaper(base64Image: String) {
+        Thread {
+            try {
+                val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                val wallpaperManager = WallpaperManager.getInstance(this)
+                if (bitmap != null) {
+                    wallpaperManager.setBitmap(
+                        bitmap,
+                        null,
+                        true,
+                        WallpaperManager.FLAG_LOCK or WallpaperManager.FLAG_SYSTEM
+                    )
+                    Log.d(TAG, "System wallpaper synchronized (Lock and Home)")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error syncing system wallpaper", e)
+            }
+        }.start()
     }
 
     private fun showAppOptionsDialog(app: AppUiModel) {
