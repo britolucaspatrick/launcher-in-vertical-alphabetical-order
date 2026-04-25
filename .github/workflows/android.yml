@@ -60,3 +60,36 @@ jobs:
       with:
         name: app-release
         path: app/build/outputs/apk/release/app-release.apk
+
+  test-lab:
+    name: Firebase Test Lab (Robo)
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Download APK
+      uses: actions/download-artifact@v4
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Run Robo Test
+      run: |
+        gcloud firebase test android run \
+          --type robo \
+          --app app/build/outputs/apk/debug/app-debug.apk \
+          --device model=pixel8pro,version=34,locale=pt_BR,orientation=portrait \
+          --robo-script robo_script.json \
+          --timeout 3m

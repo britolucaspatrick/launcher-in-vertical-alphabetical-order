@@ -1,0 +1,33 @@
+[
+  {
+    "eventType": "VIEW_CLICKED",
+    "elementDescriptors": [
+      {
+        "resourceId": "com.insight.launcher:id/recyclerView"
+      },
+      {
+        "index": 0
+      }
+    ],
+    "delayTime": 2000
+  },
+  {
+    "eventType": "VIEW_LONG_CLICKED",
+    "elementDescriptors": [
+      {
+        "resourceId": "com.insight.launcher:id/recyclerView"
+      },
+      {
+        "index": 1
+      }
+    ]
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "elementDescriptors": [
+      {
+        "resourceId": "com.insight.launcher:id/btnInfo"
+      }
+    ]
+  }
+]
