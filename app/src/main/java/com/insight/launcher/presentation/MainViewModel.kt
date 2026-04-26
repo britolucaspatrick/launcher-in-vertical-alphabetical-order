@@ -41,16 +41,17 @@ class MainViewModel(
     }
 
     fun loadBackground(isRotation: Boolean = false) {
-        val base64Image = if (isRotation) {
+        val actualRotation = isRotation && imageCacheManager.shouldRotate()
+        val base64Image = if (actualRotation) {
             imageCacheManager.rotateImages()
         } else {
             imageCacheManager.getCurrentBase64() ?: imageCacheManager.rotateImages()
         }
 
         if (base64Image != null) {
-            _backgroundState.value = BackgroundState.Success(base64Image, isRotation)
+            _backgroundState.value = BackgroundState.Success(base64Image, actualRotation)
             
-            if (isRotation || imageCacheManager.getNextBase64() == null) {
+            if (actualRotation || imageCacheManager.getNextBase64() == null) {
                 imageCacheManager.prefetchNextImage()
             }
             return

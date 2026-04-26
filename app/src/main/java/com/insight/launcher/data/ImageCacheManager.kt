@@ -15,10 +15,17 @@ class ImageCacheManager(private val context: Context) {
     companion object {
         private const val KEY_CURRENT = "current_image_base64"
         private const val KEY_NEXT = "next_image_base64"
+        private const val KEY_LAST_ROTATION = "last_rotation_timestamp"
+        private const val ROTATION_INTERVAL = 30 * 60 * 1000L // 30 minutos
     }
 
     fun getCurrentBase64(): String? = prefs.getString(KEY_CURRENT, null)
     fun getNextBase64(): String? = prefs.getString(KEY_NEXT, null)
+
+    fun shouldRotate(): Boolean {
+        val lastRotation = prefs.getLong(KEY_LAST_ROTATION, 0L)
+        return System.currentTimeMillis() - lastRotation >= ROTATION_INTERVAL
+    }
 
     /**
      * Move a próxima imagem para a posição atual e limpa a próxima.
@@ -29,6 +36,7 @@ class ImageCacheManager(private val context: Context) {
             prefs.edit {
                 putString(KEY_CURRENT, next)
                     .remove(KEY_NEXT)
+                    .putLong(KEY_LAST_ROTATION, System.currentTimeMillis())
             }
             return next
         }
