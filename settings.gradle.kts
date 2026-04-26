@@ -21,4 +21,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "launcher-in-vertical-alphabetical-order"
 include(":app")
- 
