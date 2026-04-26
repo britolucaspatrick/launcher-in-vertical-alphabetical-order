@@ -1,3 +1,5 @@
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.gms.google.services)
@@ -33,7 +35,6 @@ android {
         debug {
             firebaseAppDistribution {
                 appId = "1:273826847343:android:5f141cb840754de2468b9a"
-                serviceCredentialsFile = "app/google-services.json" // This is often used if not using service account key env var
                 groups = "testers"
             }
         }
