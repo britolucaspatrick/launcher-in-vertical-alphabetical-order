@@ -61,6 +61,14 @@ jobs:
         name: app-release
         path: app/build/outputs/apk/release/app-release.apk
 
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Deploy to Firebase App Distribution
+      run: ./gradlew app:appDistributionUploadRelease
+
   test-lab:
     name: Firebase Test Lab (Robo)
     needs: build
@@ -90,7 +98,6 @@ jobs:
         gcloud firebase test android run \
           --type robo \
           --app app/build/outputs/apk/debug/app-debug.apk \
-          --device model=NexusLowRes,version=30,locale=en_US,orientation=portrait \
+          --device model=a15,version=35,locale=en_US,orientation=portrait \
           --robo-script robo_script.json \
-          --timeout 3m \
-          --verbosity=debug
+          --timeout 3m

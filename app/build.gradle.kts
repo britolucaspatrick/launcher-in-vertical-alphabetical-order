@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.google.firebase.crashlytics)
     alias(libs.plugins.google.firebase.perf)
+    alias(libs.plugins.google.firebase.appdistribution)
 }
 
 android {
@@ -29,11 +30,23 @@ android {
     }
 
     buildTypes {
+        debug {
+            firebaseAppDistribution {
+                appId = "1:273826847343:android:5f141cb840754de2468b9a"
+                serviceCredentialsFile = "app/google-services.json" // This is often used if not using service account key env var
+                groups = "testers"
+            }
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            
+            firebaseAppDistribution {
+                appId = "1:273826847343:android:5f141cb840754de2468b9a"
+                groups = "testers"
+            }
         }
     }
     buildFeatures {
