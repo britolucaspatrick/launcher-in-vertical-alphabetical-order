@@ -66,6 +66,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val packageReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            viewModel.fetchApps()
+        }
+    }
+
     private val uninstallResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -93,6 +99,14 @@ class MainActivity : AppCompatActivity() {
             val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
             registerReceiver(screenOffReceiver, filter)
 
+            val packageFilter = IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REMOVED)
+                addAction(Intent.ACTION_PACKAGE_CHANGED)
+                addDataScheme("package")
+            }
+            registerReceiver(packageReceiver, packageFilter)
+
             viewModel.fetchApps()
             viewModel.loadBackground()
         } catch (e: Exception) {
@@ -100,12 +114,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.fetchApps()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         try {
             unregisterReceiver(screenOffReceiver)
+            unregisterReceiver(packageReceiver)
         } catch (e: Exception) {
-            Log.e(TAG, "Error unregistering receiver", e)
+            Log.e(TAG, "Error unregistering receivers", e)
         }
     }
 
