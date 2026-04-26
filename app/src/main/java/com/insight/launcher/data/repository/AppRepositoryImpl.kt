@@ -14,7 +14,7 @@ class AppRepositoryImpl(private val context: Context) : AppRepository {
         
         return resolveInfos.mapNotNull { resolveInfo ->
             val appInfo = resolveInfo.activityInfo.applicationInfo
-            if (appInfo.packageName == context.packageName) null
+            if (appInfo.packageName == context.packageName || !appInfo.enabled) null
             else {
                 AppModel(
                     label = pm.getApplicationLabel(appInfo).toString(),
