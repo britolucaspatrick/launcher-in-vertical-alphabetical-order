@@ -13,7 +13,7 @@ buildscript {
             classpath("org.jdom:jdom2:2.0.6.1") {
                 because("fix XXE vulnerability in AGP transitive dependency (CVE-2021-33813)")
             }
-            classpath("io.netty:netty-codec-http2:4.1.132.Final") {
+            classpath("io.netty:netty-codec-http2:4.2.12.Final") {
                 because("fix HTTP/2 CONTINUATION Frame Flood DoS in transitive dependency")
             }
             classpath("org.bitbucket.b_c:jose4j:0.9.6") {
